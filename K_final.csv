@@ -1,0 +1,31 @@
+part,g_h,scenario,final,argent
+A,0,M lost,24h,36h
+A,0,one backup lost,24h,n/a
+A,0,M and one backup lost,36h,n/a
+A,0,all three lost,never,n/a
+A,12,M lost,24h,48h
+A,12,one backup lost,24h,n/a
+A,12,M and one backup lost,48h,n/a
+A,12,all three lost,never,n/a
+A,24,M lost,24h,60h
+A,24,one backup lost,24h,n/a
+A,24,M and one backup lost,60h,n/a
+A,24,all three lost,never,n/a
+B,0,M stolen (owner has nothing),12h,12h
+B,0,M copied,12h,12h
+B,0,S1 + S2 stolen,12h,n/a
+B,0,"M + S2 stolen, owner holds S1",12h,n/a
+B,0,"M + S2 stolen, S1 lost",none,n/a
+B,0,S1 stolen (alone),>=84h,n/a
+B,12,M stolen (owner has nothing),0h,0h
+B,12,M copied,12h,12h
+B,12,S1 + S2 stolen,12h,n/a
+B,12,"M + S2 stolen, owner holds S1",0h,n/a
+B,12,"M + S2 stolen, S1 lost",none,n/a
+B,12,S1 stolen (alone),>=84h,n/a
+B,24,M stolen (owner has nothing),none,none
+B,24,M copied,12h,12h
+B,24,S1 + S2 stolen,12h,n/a
+B,24,"M + S2 stolen, owner holds S1",none,n/a
+B,24,"M + S2 stolen, S1 lost",none,n/a
+B,24,S1 stolen (alone),>=84h,n/a
