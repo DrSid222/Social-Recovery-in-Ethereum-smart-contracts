@@ -36,6 +36,47 @@ python3 demo.py            # side-by-side scenarios, Argent against the final de
 | `sanity_final.py` | Hand-computed predictions for the final design (two-of-three rule, key lock, takeover cases) | `sanity_final failures: 0` |
 | `selfcheck_final.py` | Monotonicity for both designs: a later reaction, slower guardians or more bad guardians never give a better result (3,828 comparisons, a few minutes) | `MONOTONE` |
 
+## Solidity: AuthorityGuard (`authguard/`)
+
+A demo of a defence against **authority reentrancy**. In wallets where recovery finalization is permissionless, a contract called mid-`executeBatch` can re-enter `finalizeRecovery()` and change the wallet's authority while the batch is still running.
+
+**Defences** (`AuthorityGuard.sol`):
+- Checks-Effects-Interactions: authority state and epoch are committed before events.
+- Authority epoch: a counter plus a hash of owner, guardians and modules.
+- Transient execution lock (EIP-1153): `executeBatch` sets it, and permissionless recovery functions revert with `AuthorityInFlux()` while it is set.
+- Snapshot-and-verify: after the batch, the epoch must equal the pre-batch snapshot, otherwise `AuthorityEpochModified` reverts the batch.
+
+**Contracts**
+
+| File | Purpose |
+|---|---|
+| `AuthorityGuard.sol` | The guard (abstract, ERC-7201 namespaced storage) |
+| `SocialRecoveryWallet.sol` | Demo wallet: guardian threshold, 24h timelock, permissionless finalize, owner cancel |
+| `MaliciousCallee.sol` | Attacker that re-enters `finalizeRecovery()` from `fallback`/`receive` |
+| `AuthGuard.t.sol` | Foundry tests |
+
+**Run the tests** (needs [Foundry](https://book.getfoundry.sh/)):
+
+```
+forge install foundry-rs/forge-std
+forge test -vvv
+```
+
+`foundry.toml` pins solc 0.8.24 and `evm_version = "cancun"`. Chains without EIP-1153 cannot run the transient lock.
+
+**What the tests show**
+- The attack is blocked mid-batch, using a recovery that is otherwise finalizable (after warping past the timelock with the threshold met).
+- A control wallet without the guard is successfully taken over by the same attacker.
+- Nested `executeBatch` by a contract owner reverts with `BatchReentrancyDetected`.
+- Snapshot-and-verify catches authority drift inside a guarded batch.
+- Timelock, threshold and access-control checks revert with the expected errors.
+
+**Limits**
+- Guardians and threshold are fixed at construction; there is no guardian management.
+- The authority hash does not include the threshold, which is acceptable only while it is immutable.
+- No audit and no fuzz or invariant tests yet. The two hard-coded storage slot constants should be re-derived with `cast` before any real use.
+- The guard addresses reentrancy only; the guardian-policy results above come solely from the Python model.
+
 ## Files
 
 | File | Purpose |
@@ -50,6 +91,7 @@ python3 demo.py            # side-by-side scenarios, Argent against the final de
 | `make_report_weighted.py` | Builds `WEIGHTED_RESULTS.md` from the CSV |
 | `traces.py` | Attack traces, step by step (`results/traces.md`) |
 | `results/` | CSV output and traces |
+
 
 ## Reproduce the results
 
