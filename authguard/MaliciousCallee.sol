@@ -1,39 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface ISocialRecoveryWallet {
+interface IRecoverable {
     function finalizeRecovery() external;
-    function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external payable;
 }
 
 /**
  * @title MaliciousCallee
  * @dev Simulates an untrusted contract (e.g. an ERC-777 hook or malicious DeFi protocol)
- *      that attempts to hijack authority while the wallet is mid-batch.
+ *      that re-enters `finalizeRecovery()` while the wallet is mid-batch.
+ *      Reverts are NOT swallowed, so a guard revert propagates to the wallet.
  */
 contract MaliciousCallee {
-    ISocialRecoveryWallet public targetWallet;
+    IRecoverable public immutable target;
     bool public attackAttempted;
     bool public attackSucceeded;
 
-    constructor(address _targetWallet) {
-        targetWallet = ISocialRecoveryWallet(_targetWallet);
+    constructor(address _target) {
+        target = IRecoverable(_target);
     }
 
-    /**
-     * @dev Fallback hook triggered when the wallet calls this contract during `executeBatch()`.
-     *      It immediately re-enters the wallet to execute `finalizeRecovery()`.
-     */
     fallback() external payable {
-        attackAttempted = true;
-        // Attempt Authority Reentrancy exploit:
-        targetWallet.finalizeRecovery();
-        attackSucceeded = true;
+        _attack();
     }
 
     receive() external payable {
+        _attack();
+    }
+
+    function _attack() internal {
         attackAttempted = true;
-        targetWallet.finalizeRecovery();
+        target.finalizeRecovery();
         attackSucceeded = true;
     }
 }
