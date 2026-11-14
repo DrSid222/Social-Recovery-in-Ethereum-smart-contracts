@@ -1,0 +1,7 @@
+[profile.default]
+src = "authguard"
+test = "authguard"
+out = "out"
+libs = ["lib"]
+solc = "0.8.24"
+evm_version = "cancun"   # required for tstore/tload (EIP-1153)
